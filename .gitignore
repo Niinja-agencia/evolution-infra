@@ -1,0 +1,18 @@
+# secrets
+.env
+*.pem
+*.key
+*.crt
+
+# logs
+*.log
+
+# docker volumes / runtime
+**/data/
+**/volumes/
+**/.cache/
+**/tmp/
+
+# node / build (se tiver)
+node_modules/
+dist/

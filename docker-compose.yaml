@@ -1,0 +1,71 @@
+version: "3.8"
+
+services:
+  evolution_api:
+    image: atendai/evolution-api:latest
+    container_name: evolution_api
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_URL=https://evo.giovannipaganini.com
+      - DOCKER_ENV=true
+
+      # Auth
+      - AUTHENTICATION_TYPE=apikey
+      - AUTHENTICATION_API_KEY=156a2e7f66d8e31e231ae1a8c5edbfed283d
+
+      # Chatwoot
+      - CHATWOOT_ENABLED=true
+      - CHATWOOT_BASE_URL=https://chat.giovannipaganini.com
+      - CHATWOOT_API_KEY=gHrXqBeLSZG3QdJVLuSDyzye
+
+      # Banco de dados
+      - DATABASE_ENABLED=true
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://docker:docker@postgres_evo:5432/evolution?schema=public
+
+      # Redis (cache/sessões)
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_HOST=redis_evo
+      - CACHE_REDIS_PORT=6379
+
+    depends_on:
+      - postgres_evo
+      - redis_evo
+
+    networks:
+      - evolution_net
+
+  postgres_evo:
+    image: postgres:15-alpine
+    container_name: postgres_evo
+    restart: always
+    environment:
+      - POSTGRES_USER=docker
+      - POSTGRES_PASSWORD=docker
+      - POSTGRES_DB=evolution
+    volumes:
+      - evolution_db:/var/lib/postgresql/data
+    networks:
+      - evolution_net
+
+  redis_evo:
+    image: redis:7-alpine
+    container_name: redis_evo
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "no", "--save", ""]
+    networks:
+      - evolution_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  evolution_db:
+
+networks:
+  evolution_net:
+    driver: bridge
